@@ -6,10 +6,12 @@
     </head>
     <body>
         <div class="container">
-            <canvas id="canvas"></canvas>
+            <canvas id="canvas" width="1920px" height="1080px"></canvas>
         </div>
         <script src="simulation.js"></script>
         <script src="playground.js"></script>
+        <script src="vector2.js"></script>
+        <script src="drawutils.js"></script>
         <script>
             // Grab the Canvas and the Context
             var canvas = document.getElementById("canvas");
@@ -54,7 +56,7 @@
             // Add Event Listeners for the Mouse to the Canvas
             canvas.addEventListener('mousemove', function(e) {
                 let mousePos = getMousePosition(canvas, e);
-                playground.onMouseMove(mousePos.x, mousePos.y);
+                playground.onMouseMove(new Vector2(mousePos.x, mousePos.y));
             }, false);
 
             canvas.addEventListener('mousedown', function(e) {
