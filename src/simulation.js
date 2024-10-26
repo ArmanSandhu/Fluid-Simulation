@@ -23,8 +23,12 @@ class Simulation {
     }
 
     update(deltaTime) {
+        // First move the particles based on their current predicted path.
         this.predictPositions(deltaTime);
+        // Adjust the speed of the particles.
         this.computeNextVelocity(deltaTime);
+        // If any particles reach the boundaries of our canvas, make sure they bounce back.
+        this.checkBoundary();
     }
 
     draw(){
@@ -51,6 +55,27 @@ class Simulation {
         for (let i = 0; i < this.particles.length; i++) {
             let velocity = Scale(Subtract(this.particles[i].position, this.particles[i].prevPosition), 1.0 / deltaTime);
             this.particles[i].velocity = velocity;
+        }
+    }
+
+    checkBoundary() {
+        for (let i = 0; i < this.particles.length; i++) {
+            let position = this.particles[i].position;
+            
+            if (position.x < 0) {
+                this.particles[i].velocity.x *= -1;
+            }
+            if (position.y < 0) {
+                this.particles[i].velocity.y *= -1;
+            }
+        
+            if (position.x > canvas.width) {
+                this.particles[i].velocity.x *= -1;
+            }
+            if (position.y > canvas.height) {
+                this.particles[i].velocity.y *= -1;
+            }
+            
         }
     }
 }
