@@ -14,6 +14,10 @@ class Vector2 {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
 
+    LengthSquared() {
+        return this.x * this.x + this.y * this.y
+    }
+
     GetNormal() {
         return Vector2(this.y, -this.x);
     }

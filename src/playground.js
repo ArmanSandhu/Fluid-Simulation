@@ -1,10 +1,11 @@
 class Playground {
     constructor() {
         this.simulation = new Simulation();
+        this.mousePosition = Vector2.Zero();
     }
 
     update(deltaTime) {
-        this.simulation.update(deltaTime);
+        this.simulation.update(deltaTime, this.mousePosition);
     }
     
     draw() {
@@ -17,8 +18,9 @@ class Playground {
         // DrawUtils.drawText(new Vector2(300, 300), 20, "white", "Hello World!");
     }
 
-    onMouseMove(x, y) {
-        console.log("Mouse Moved to: (" + x + ", " + y + ")");
+    onMouseMove(position) {
+        //console.log("Mouse Moved to: (" + position.x + ", " + position.y + ")");
+        this.mousePosition = position;
     }
 
     onMouseDown(button) {

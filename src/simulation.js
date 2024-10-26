@@ -1,14 +1,16 @@
 class Simulation {
     constructor() {
         this.particles = [];
+        this.fluidhashgrid = new FluidHashGrid(25);
         this.PARTICLE_COUNT = 1000;
         this.VELOCITY_DAMPING = 1;
 
         this.initializeParticles();
+        this.fluidhashgrid.initializeParticles(this.particles);
     }
 
     initializeParticles() {
-        let particleOffset = 20;
+        let particleOffset = 15;
         let globalOffset = new Vector2(750, 100);
         let currParticleCount = Math.sqrt(this.PARTICLE_COUNT);
 
@@ -16,13 +18,14 @@ class Simulation {
             for (let y = 0; y < currParticleCount; y++) {
                 let currPosition = new Vector2(x * particleOffset + globalOffset.x, y * particleOffset + globalOffset.y);
                 let newParticle = new Particle(currPosition);
-                newParticle.velocity = Scale(new Vector2(-0.5 + Math.random(), -0.5 + Math.random()), 200);
+                //newParticle.velocity = Scale(new Vector2(-0.5 + Math.random(), -0.5 + Math.random()), 200);
                 this.particles.push(newParticle);
             }
         }
     }
 
-    update(deltaTime) {
+    update(deltaTime, mousePosition) {
+        this.neighbourSearch(mousePosition);
         // First move the particles based on their current predicted path.
         this.predictPositions(deltaTime);
         // Adjust the speed of the particles.
@@ -76,6 +79,31 @@ class Simulation {
                 this.particles[i].velocity.y *= -1;
             }
             
+        }
+    }
+
+    neighbourSearch(mousePosition) {
+        this.fluidhashgrid.clearGrid();
+        this.fluidhashgrid.mapParticlesToCell();
+
+        //let gridHashId = this.fluidhashgrid.getGridHashFromPosition(mousePosition);
+        //let contents = this.fluidhashgrid.getContentsOfCell(gridHashId);
+        this.particles[0].position = mousePosition.Cpy();
+        let contents = this.fluidhashgrid.getNeighbourOfParticleAtIndex(0);
+
+        for (let i = 0; i < this.particles.length; i++) {
+            this.particles[i].color = "#28b0ff";
+        }
+
+        for (let i = 0; i < contents.length; i++) {
+            let currParticle = contents[i];
+
+            let currDirection = Subtract(currParticle.position, mousePosition);
+            let distanceSquared = currDirection.LengthSquared();
+
+            if (distanceSquared <= 25 * 25) {
+                currParticle.color = "orange";
+            }
         }
     }
 }
