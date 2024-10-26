@@ -15,13 +15,16 @@ class Simulation {
         for (let x = 0; x < currParticleCount; x++) {
             for (let y = 0; y < currParticleCount; y++) {
                 let currPosition = new Vector2(x * particleOffset + globalOffset.x, y * particleOffset + globalOffset.y);
-                this.particles.push(new Particle(currPosition));
+                let newParticle = new Particle(currPosition);
+                newParticle.velocity = Scale(new Vector2(-0.5 + Math.random(), -0.5 + Math.random()), 200);
+                this.particles.push(newParticle);
             }
         }
     }
 
     update(deltaTime) {
-        console.log("Update Simulation!");
+        this.predictPositions(deltaTime);
+        this.computeNextVelocity(deltaTime);
     }
 
     draw(){
@@ -39,14 +42,14 @@ class Simulation {
             this.particles[i].prevPosition = this.particles[i].position.Cpy();
             let nextPosition = Scale(this.particles[i].velocity, deltaTime * this.VELOCITY_DAMPING);
             // Advance to the next possible position
-            this.particles[i].position = Add(this.particles[i].position, )
+            this.particles[i].position = Add(this.particles[i].position, nextPosition)
         }
     }
 
     // This method loops through all the particles and predicts their new velocity.
     computeNextVelocity(deltaTime) {
         for (let i = 0; i < this.particles.length; i++) {
-            let velocity = Scale(Sub(this.particles[i].position, this.particles[i].prevPosition), 1.0 / deltaTime);
+            let velocity = Scale(Subtract(this.particles[i].position, this.particles[i].prevPosition), 1.0 / deltaTime);
             this.particles[i].velocity = velocity;
         }
     }

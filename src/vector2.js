@@ -18,13 +18,16 @@ class Vector2 {
         return Vector2(this.y, -this.x);
     }
 
-    // Return the Dot Product of 2 vectors. 
     Dot(vector) {
         return this.x * vector.x + this.y * vector.y
     }
 
     Log() {
         console.log("Vector2 (x, y): (" + this.x + ", " + this.y + ")")
+    }
+
+    Cpy() {
+        return new Vector2(this.x, this.y);
     }
 
     static Zero() {
