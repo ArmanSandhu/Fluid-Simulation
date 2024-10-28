@@ -1,11 +1,10 @@
 class Playground {
     constructor() {
         this.simulation = new Simulation();
-        this.mousePosition = Vector2.Zero();
     }
 
     update(deltaTime) {
-        this.simulation.update(deltaTime, this.mousePosition);
+        this.simulation.update(0.25);
     }
     
     draw() {

@@ -1,17 +1,21 @@
 class Simulation {
     constructor() {
         this.particles = [];
-        this.fluidhashgrid = new FluidHashGrid(25);
-        this.PARTICLE_COUNT = 1000;
+        this.PARTICLE_COUNT = 2000;
         this.VELOCITY_DAMPING = 1;
         this.GRAVITY = new Vector2(0, 1);
+        this.REST_DENSITY = 10;
+        this.K_NEAR = 3;
+        this.K = 0.15;
+        this.INTERACTION_RADIUS = 25;
 
+        this.fluidhashgrid = new FluidHashGrid(this.INTERACTION_RADIUS);
         this.initializeParticles();
         this.fluidhashgrid.initializeParticles(this.particles);
     }
 
     initializeParticles() {
-        let particleOffset = 15;
+        let particleOffset = 10;
         let globalOffset = new Vector2(750, 100);
         let currParticleCount = Math.sqrt(this.PARTICLE_COUNT);
 
@@ -25,15 +29,16 @@ class Simulation {
         }
     }
 
-    update(deltaTime, mousePosition) {
+    update(deltaTime) {
         this.applyGravity(deltaTime);
-        this.neighbourSearch(mousePosition);
         // First move the particles based on their current predicted path.
         this.predictPositions(deltaTime);
-        // Adjust the speed of the particles.
-        this.computeNextVelocity(deltaTime);
+        this.neighbourSearch();
+        this.doubleDensityRelaxation(deltaTime);
         // If any particles reach the boundaries of our canvas, make sure they bounce back.
         this.checkBoundary();
+        // Adjust the speed of the particles.
+        this.computeNextVelocity(deltaTime);
     }
 
     draw(){
@@ -68,17 +73,21 @@ class Simulation {
             let position = this.particles[i].position;
             
             if (position.x < 0) {
-                this.particles[i].velocity.x *= -1;
+                this.particles[i].position.x = 0;
+                this.particles[i].prevPosition.x = 0;
             }
             if (position.y < 0) {
-                this.particles[i].velocity.y *= -1;
+                this.particles[i].position.y = 0;
+                this.particles[i].prevPosition.y = 0;
             }
         
             if (position.x > canvas.width) {
-                this.particles[i].velocity.x *= -1;
+                this.particles[i].position.x = canvas.width - 1;
+                this.particles[i].prevPosition.x = canvas.width - 1;
             }
             if (position.y > canvas.height) {
-                this.particles[i].velocity.y *= -1;
+                this.particles[i].position.y = canvas.height - 1;
+                this.particles[i].prevPosition.y = canvas.height - 1;
             }
             
         }
@@ -86,32 +95,56 @@ class Simulation {
 
     applyGravity(deltaTime) {
         for (let i = 0; i < this.particles.length; i++) {
-            this.particles[i].velocity = Add(this.particles[i].velocity, Scale(this.GRAVITY, deltaTime))
+            this.particles[i].velocity = Add(this.particles[i].velocity, Scale(this.GRAVITY, deltaTime));
         }
     }
 
-    neighbourSearch(mousePosition) {
+    neighbourSearch() {
         this.fluidhashgrid.clearGrid();
         this.fluidhashgrid.mapParticlesToCell();
+    }
 
-        //let gridHashId = this.fluidhashgrid.getGridHashFromPosition(mousePosition);
-        //let contents = this.fluidhashgrid.getContentsOfCell(gridHashId);
-        this.particles[0].position = mousePosition.Cpy();
-        let contents = this.fluidhashgrid.getNeighbourOfParticleAtIndex(0);
-
+    doubleDensityRelaxation(deltaTime) {
         for (let i = 0; i < this.particles.length; i++) {
-            this.particles[i].color = "#28b0ff";
-        }
+            let density = 0;
+            let nearDensity = 0;
+            let neighbours = this.fluidhashgrid.getNeighbourOfParticleAtIndex(i);
+            let currParticle = this.particles[i];
 
-        for (let i = 0; i < contents.length; i++) {
-            let currParticle = contents[i];
+            // Compute Density and Near Density
+            for (let j = 0; j < neighbours.length; j++) {
+                let currNeighbour = neighbours[j];
+                if (currParticle == currNeighbour) continue;
+                let gradient = Subtract(currNeighbour.position, currParticle.position);
+                let q = gradient.Length() / this.INTERACTION_RADIUS;
 
-            let currDirection = Subtract(currParticle.position, mousePosition);
-            let distanceSquared = currDirection.LengthSquared();
-
-            if (distanceSquared <= 25 * 25) {
-                currParticle.color = "orange";
+                if (q < 1.0) {
+                    density += Math.pow((1 - q), 2);
+                    nearDensity += Math.pow((1 - q), 3);
+                }
             }
+
+            // Compute Pressure and Near Pressure
+            let pressure = this.K * (density - this.REST_DENSITY);
+            let pressureNear = this.K_NEAR * nearDensity;
+            let currParticleDisplacement = Vector2.Zero();
+            
+            for (let j = 0; j < neighbours.length; j++) {
+                let currNeighbour = neighbours[j];
+                if (currParticle == currNeighbour) continue;
+                let gradient = Subtract(currNeighbour.position, currParticle.position);
+                let q = gradient.Length() / this.INTERACTION_RADIUS;
+
+                if (q < 1.0) {
+                    gradient.Normalize()
+                    let displacementTerm = Math.pow(deltaTime, 2) * (pressure * (1 - q) + pressureNear * Math.pow((1 - q), 2));
+                    let displacement = Scale(gradient, displacementTerm);
+                    currNeighbour.position = Add(currNeighbour.position, Scale(displacement, 0.5));
+                    currParticleDisplacement = Subtract(currParticleDisplacement, Scale(displacement, 0.5));
+                }
+            }
+
+            currParticle.position = Add(currParticle.position, currParticleDisplacement);
         }
     }
 }
