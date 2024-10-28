@@ -4,6 +4,7 @@ class Simulation {
         this.fluidhashgrid = new FluidHashGrid(25);
         this.PARTICLE_COUNT = 1000;
         this.VELOCITY_DAMPING = 1;
+        this.GRAVITY = new Vector2(0, 1);
 
         this.initializeParticles();
         this.fluidhashgrid.initializeParticles(this.particles);
@@ -25,6 +26,7 @@ class Simulation {
     }
 
     update(deltaTime, mousePosition) {
+        this.applyGravity(deltaTime);
         this.neighbourSearch(mousePosition);
         // First move the particles based on their current predicted path.
         this.predictPositions(deltaTime);
@@ -79,6 +81,12 @@ class Simulation {
                 this.particles[i].velocity.y *= -1;
             }
             
+        }
+    }
+
+    applyGravity(deltaTime) {
+        for (let i = 0; i < this.particles.length; i++) {
+            this.particles[i].velocity = Add(this.particles[i].velocity, Scale(this.GRAVITY, deltaTime))
         }
     }
 
