@@ -1,13 +1,17 @@
 class Simulation {
     constructor() {
         this.particles = [];
-        this.PARTICLE_COUNT = 2000;
+        this.PARTICLE_COUNT = 1500;
         this.VELOCITY_DAMPING = 1;
         this.GRAVITY = new Vector2(0, 1);
         this.REST_DENSITY = 10;
         this.K_NEAR = 3;
+        // The smaller K value the higher particle attraction force.
         this.K = 0.15;
         this.INTERACTION_RADIUS = 25;
+        // Viscosity Parameters
+        this.SIGMA = 0.5;
+        this.BETA = 0.03;
 
         this.fluidhashgrid = new FluidHashGrid(this.INTERACTION_RADIUS);
         this.initializeParticles();
@@ -31,6 +35,7 @@ class Simulation {
 
     update(deltaTime) {
         this.applyGravity(deltaTime);
+        this.addViscosity(deltaTime);
         // First move the particles based on their current predicted path.
         this.predictPositions(deltaTime);
         this.neighbourSearch();
@@ -145,6 +150,37 @@ class Simulation {
             }
 
             currParticle.position = Add(currParticle.position, currParticleDisplacement);
+        }
+    }
+
+    addViscosity(deltaTime) {
+        for (let i = 0; i < this.particles.length; i++) {
+            let neighbours = this.fluidhashgrid.getNeighbourOfParticleAtIndex(i);
+            let currParticle = this.particles[i];
+
+            for (let j = 0; j < neighbours.length; j++) {
+                let currNeighbour = neighbours[j];
+                if (currParticle == currNeighbour) continue;
+                
+                let gradient = Subtract(currNeighbour.position, currParticle.position);
+                let currParticleVelocity = currParticle.velocity;
+                let currNeighbourVelocity = currNeighbour.velocity;
+
+                let q = gradient.Length() / this.INTERACTION_RADIUS;
+
+                if (q < 1.0) {
+                    gradient.Normalize()
+                    let inwardRadialVelocity = Subtract(currParticleVelocity, currNeighbourVelocity).Dot(gradient);
+                    
+                    if (inwardRadialVelocity > 0) {
+                        let impulseTerm = deltaTime * (1 - q) * (this.SIGMA * inwardRadialVelocity + this.BETA * inwardRadialVelocity * inwardRadialVelocity);
+                        let impulse = Scale(gradient, impulseTerm);
+
+                        currNeighbour.velocity = Add(currNeighbour.velocity, Scale(impulse, 0.5));
+                        currParticle.velocity = Subtract(currParticle.velocity, Scale(impulse, 0.5));
+                    }
+                }
+            }
         }
     }
 }
