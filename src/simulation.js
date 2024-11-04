@@ -1,6 +1,7 @@
 class Simulation {
     constructor() {
         this.particles = [];
+        this.particleEmitters = [];
         this.PARTICLE_COUNT = 1500;
         this.VELOCITY_DAMPING = 1;
         this.GRAVITY = new Vector2(0, 1);
@@ -16,6 +17,15 @@ class Simulation {
         this.fluidhashgrid = new FluidHashGrid(this.INTERACTION_RADIUS);
         this.initializeParticles();
         this.fluidhashgrid.initializeParticles(this.particles);
+
+        this.emitter = this.createParticleEmitter(
+            new Vector2(canvas.width / 2, 400), // position 
+            new Vector2(0, -1), // direction
+            30, // size
+            1, // spawn interval
+            20, // amount
+            20 // velocity
+        );
     }
 
     initializeParticles() {
@@ -34,6 +44,7 @@ class Simulation {
     }
 
     update(deltaTime) {
+        this.emitter.spawn(deltaTime, this.particles);
         this.applyGravity(deltaTime);
         this.addViscosity(deltaTime);
         // First move the particles based on their current predicted path.
@@ -51,6 +62,10 @@ class Simulation {
             let position = this.particles[i].position;
             let color = this.particles[i].color;
             DrawUtils.drawPoint(position, 5, color);
+        }
+
+        for (let i = 0; i < this.particleEmitters.length; i++) {
+            this.particleEmitters[i].draw();
         }
     }
 
@@ -182,5 +197,11 @@ class Simulation {
                 }
             }
         }
+    }
+
+    createParticleEmitter(position, direction, size, spawnInterval, amount, velocity) {
+        let emitter = new ParticleEmitter(position, direction, size, spawnInterval, amount, velocity);
+        this.particleEmitters.push(emitter);
+        return emitter;
     }
 }
