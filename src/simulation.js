@@ -45,6 +45,9 @@ class Simulation {
 
     update(deltaTime) {
         this.emitter.spawn(deltaTime, this.particles);
+        if (this.rotate) {
+            this.emitter.rotate(0.01);
+        }
         this.applyGravity(deltaTime);
         this.addViscosity(deltaTime);
         // First move the particles based on their current predicted path.

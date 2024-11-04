@@ -24,6 +24,9 @@ class Playground {
 
     onMouseDown(button) {
         console.log("Mouse Button Pressed: " + button);
+        if (button == 1) {
+            this.simulation.rotate = !this.simulation.rotate;
+        }
     }
 
     onMouseUp(button) {

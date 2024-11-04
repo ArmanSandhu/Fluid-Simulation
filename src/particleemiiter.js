@@ -34,8 +34,13 @@ class ParticleEmitter {
         }
     }
 
-    rotate() {
-
+    rotate(angleInRadians) {
+        const cosAngle = Math.cos(angleInRadians);
+        const sinAngle = Math.sin(angleInRadians);
+        const rotatedX = this.direction.x * cosAngle - this.direction.y * sinAngle;
+        const rotatedY = this.direction.x * sinAngle + this.direction.y * cosAngle;
+        this.direction.x = rotatedX;
+        this.direction.y = rotatedY;
     }
 
     move(delta) {
